@@ -160,6 +160,7 @@ module GraphQL
 
       def trace_field(context_key, data)
         ns = data[:query].context.namespace(CONTEXT_NAMESPACE)
+        path_excluding_numeric_indices = data[:query].context[:current_path].select { |part| part.is_a?(String) }
         offset_time = ns[GraphQL::Metrics::QUERY_START_TIME_MONOTONIC]
         start_time = GraphQL::Metrics.current_time_monotonic
 
@@ -168,9 +169,8 @@ module GraphQL
         duration = GraphQL::Metrics.current_time_monotonic - start_time
         time_since_offset = start_time - offset_time if offset_time
 
-        path_excluding_numeric_indicies = data[:path].select { |p| p.is_a?(String) }
-        ns[context_key][path_excluding_numeric_indicies] ||= []
-        ns[context_key][path_excluding_numeric_indicies] << {
+        field_timings = ns[context_key][path_excluding_numeric_indices] ||= []
+        field_timings << {
           start_time_offset: time_since_offset, duration: duration
         }
 
